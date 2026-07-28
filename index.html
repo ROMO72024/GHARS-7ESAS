@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -84,7 +83,6 @@
                 </select>
             </div>
             
-            <!-- محدد وقت البداية المخصص -->
             <div class="form-group">
                 <label>وقت البداية</label>
                 <div class="time-selector">
@@ -98,7 +96,6 @@
                 </div>
             </div>
 
-            <!-- محدد وقت النهاية المخصص -->
             <div class="form-group">
                 <label>وقت النهاية</label>
                 <div class="time-selector">
@@ -136,7 +133,6 @@
             startBackgroundTracker();
         }
 
-        // توليد خيارات الساعات والدقائق للقوائم المنسدلة
         function initTimeSelectors() {
             const hours = Array.from({length: 12}, (_, i) => i + 1);
             const minutes = Array.from({length: 60}, (_, i) => i.toString().padStart(2, '0'));
@@ -148,14 +144,14 @@
                 hours.forEach(h => {
                     let opt = document.createElement('option');
                     opt.value = h.toString();
-                    opt.textContent = h.toString(); // الساعة (1 إلى 12)
+                    opt.textContent = h.toString();
                     hSelect.appendChild(opt);
                 });
                 
                 minutes.forEach(m => {
                     let opt = document.createElement('option');
                     opt.value = m;
-                    opt.textContent = m; // الدقيقة (00 إلى 59)
+                    opt.textContent = m;
                     mSelect.appendChild(opt);
                 });
             });
@@ -198,7 +194,7 @@
                 card.innerHTML = `
                     <div class="class-info">
                         <h3>${subject}</h3>
-                        ${grade ? `<p class="grade">🎓 ${grade}</p>` : ''}
+                        ${grade ? `<p class="grade">🎓 للصف ${grade}</p>` : ''}
                         <p>🕒 ${formatTimeToDisplay(cls.startTime)} - ${formatTimeToDisplay(cls.endTime)}</p>
                         <p style="font-size: 0.8rem; color: var(--primary); margin-top:3px;">🔔 تنبيه قبل البداية بـ ${cls.reminder} دقائق</p>
                     </div>
@@ -211,7 +207,6 @@
             });
         }
 
-        // دالة لعرض الوقت المحفوظ (24 ساعة) بصيغة صباحاً ومساءً للواجهة
         function formatTimeToDisplay(time24) {
             let [hours, minutes] = time24.split(':');
             let h = parseInt(hours);
@@ -220,7 +215,6 @@
             return `${h}:${minutes} ${ampm}`;
         }
 
-        // دالة لتحويل اختيار المستخدم إلى صيغة 24 ساعة للحفظ في النظام
         function get24HourFormat(prefix) {
             let h = parseInt(document.getElementById(`${prefix}Hour`).value);
             let m = document.getElementById(`${prefix}Minute`).value;
@@ -232,7 +226,6 @@
             return `${h.toString().padStart(2, '0')}:${m}`;
         }
 
-        // دالة لضبط القوائم المنسدلة عند فتح نافذة التعديل
         function setTimeSelectorsFrom24(prefix, time24) {
             if(!time24) return;
             let [h24, m] = time24.split(':');
@@ -251,7 +244,6 @@
             document.getElementById('gradeName').value = '';
             document.getElementById('classDay').value = currentDay;
             
-            // قيم افتراضية عند إضافة حصة جديدة: 8:00 صباحاً
             document.getElementById('startHour').value = '8';
             document.getElementById('startMinute').value = '00';
             document.getElementById('startAmPm').value = 'AM';
@@ -275,7 +267,6 @@
             const day = document.getElementById('classDay').value;
             const reminder = document.getElementById('reminderMins').value;
 
-            // تحويل الوقت من القوائم المنسدلة إلى صيغة 24 ساعة للنظام
             const startTime = get24HourFormat('start');
             const endTime = get24HourFormat('end');
 
@@ -306,7 +297,6 @@
             document.getElementById('classDay').value = cls.day;
             document.getElementById('reminderMins').value = cls.reminder;
             
-            // ضبط القوائم المنسدلة بناءً على الوقت المحفوظ
             setTimeSelectorsFrom24('start', cls.startTime);
             setTimeSelectorsFrom24('end', cls.endTime);
 
@@ -354,19 +344,25 @@
                     if (parseInt(cls.day) !== today) return;
 
                     const subjectDisplay = cls.subject || cls.name || 'الحصة';
-                    const gradeDisplay = cls.grade ? ` - ${cls.grade}` : '';
+                    // التعديل: إضافة كلمة "لصف" بين المادة والشعبة
+                    const gradeDisplay = cls.grade ? ` للصف ${cls.grade}` : '';
                     const fullClassName = `${subjectDisplay}${gradeDisplay}`;
 
-                    // التذكير قبل البداية
+                    // التذكير قبل البداية (المخصص من المستخدم)
                     let [startH, startM] = cls.startTime.split(':').map(Number);
                     let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
                     let diffMinsStart = Math.round((startDate - now) / 60000);
 
                     if (diffMinsStart === parseInt(cls.reminder)) {
-                        sendNotification("تذكير قبل الحصة", `متبقي ${cls.reminder} دقائق على بدء ${fullClassName}`);
+                        sendNotification("تذكير قبل الحصة", `متبقي ${cls.reminder} دقائق على بدء حصة ${fullClassName}`);
                     }
 
-                    // التذكير عند البداية
+                    // التعديل: التذكير الإضافي الثابت قبل 3 دقائق
+                    if (diffMinsStart === 3 && parseInt(cls.reminder) !== 3) {
+                        sendNotification("تنبيه اقتراب الحصة", `باقي لحصة ${fullClassName} 3 دقائق`);
+                    }
+
+                    // التذكير عند البداية (تعديل النص)
                     if (cls.startTime === currentTime && now.getSeconds() < 30) {
                         sendNotification("بدأت الحصة!", `حصة ${fullClassName} بدأت الآن.`);
                     }
@@ -377,7 +373,7 @@
                     let diffMinsEnd = Math.round((endDate - now) / 60000);
 
                     if (diffMinsEnd === 5) {
-                        sendNotification("اقتربت النهاية", `متبقي 5 دقائق على نهاية ${fullClassName}. استعد!`);
+                        sendNotification("اقتربت النهاية", `متبقي 5 دقائق على نهاية حصة ${fullClassName}. استعد!`);
                     }
                 });
             }, 30000);
