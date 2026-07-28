@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>غرس - تنبيهات الحصص</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root { --primary: #8b206f; --bg: #f4f4f9; --card: #fff; --text: #333; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; }
+        header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { margin: 0; font-size: 1.2rem; }
+        .add-btn { background: white; color: var(--primary); border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .days-nav { display: flex; overflow-x: auto; background: var(--primary); padding: 0 10px 10px; gap: 10px; }
+        .day-tab { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; cursor: pointer; transition: 0.3s; }
+        .day-tab.active { background: white; color: var(--primary); font-weight: bold; }
+        .container { padding: 15px; }
+        .class-card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-right: 4px solid var(--primary); }
+        .class-info h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.1rem; }
+        .class-info .grade { margin: 0 0 8px 0; font-size: 0.95rem; font-weight: bold; color: #555; }
+        .class-info p { margin: 0; font-size: 0.9rem; color: #666; }
+        .actions { display: flex; flex-direction: column; gap: 8px; }
+        .actions button { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .edit-btn { background: #eee; color: #333; }
+        .delete-btn { background: #ffebee; color: #d32f2f; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+        
+        /* Custom Time Selector Styles */
+        .time-selector { display: flex; align-items: center; gap: 5px; background: #f9f9f9; border: 1px solid #ddd; padding: 5px; border-radius: 8px; }
+        .time-selector select { border: none; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 8px 5px; font-weight: bold; text-align: center; }
+        .time-selector span { font-weight: bold; color: #666; padding: 0 2px; }
+        
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-cancel { background: #eee; color: #333; border: none; padding: 12px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>جدول الحصص</h1>
+        <button class="add-btn" onclick="openModal()">+</button>
+    </header>
+
+    <div class="days-nav" id="daysNav"></div>
+
+    <div class="container" id="classesList"></div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="classModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">إضافة حصة جديدة</h2>
+            <input type="hidden" id="classId">
+            
+            <div class="form-group">
+                <label>اسم المادة / البرنامج</label>
+                <input type="text" id="subjectName" placeholder="مثال: اللغة العربية" required>
+            </div>
+            
+            <div class="form-group">
+                <label>الصف / الشعبة</label>
+                <input type="text" id="gradeName" placeholder="مثال: الصف الأول" required>
+            </div>
+
+            <div class="form-group">
+                <label>اليوم</label>
+                <select id="classDay">
+                    <option value="0">الأحد</option>
+                    <option value="1">الإثنين</option>
+                    <option value="2">الثلاثاء</option>
+                    <option value="3">الأربعاء</option>
+                    <option value="4">الخميس</option>
+                    <option value="5">الجمعة</option>
+                    <option value="6">السبت</option>
+                </select>
+            </div>
+            
+            <!-- محدد وقت البداية المخصص -->
+            <div class="form-group">
+                <label>وقت البداية</label>
+                <div class="time-selector">
+                    <select id="startHour" title="الساعة"></select>
+                    <span>:</span>
+                    <select id="startMinute" title="الدقيقة"></select>
+                    <select id="startAmPm">
+                        <option value="AM">صباحاً</option>
+                        <option value="PM">مساءً</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- محدد وقت النهاية المخصص -->
+            <div class="form-group">
+                <label>وقت النهاية</label>
+                <div class="time-selector">
+                    <select id="endHour" title="الساعة"></select>
+                    <span>:</span>
+                    <select id="endMinute" title="الدقيقة"></select>
+                    <select id="endAmPm">
+                        <option value="AM">صباحاً</option>
+                        <option value="PM">مساءً</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>تنبيه قبل الحصة بـ (دقائق)</label>
+                <input type="number" id="reminderMins" value="5" min="1" max="60">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveClass()">حفظ</button>
+                <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let classes = JSON.parse(localStorage.getItem('gharsClasses')) || [];
+        let currentDay = new Date().getDay(); 
+        const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+        function init() {
+            initTimeSelectors();
+            renderDays();
+            renderClasses();
+            requestNotificationPermission();
+            startBackgroundTracker();
+        }
+
+        // توليد خيارات الساعات والدقائق للقوائم المنسدلة
+        function initTimeSelectors() {
+            const hours = Array.from({length: 12}, (_, i) => i + 1);
+            const minutes = Array.from({length: 60}, (_, i) => i.toString().padStart(2, '0'));
+            
+            ['start', 'end'].forEach(prefix => {
+                const hSelect = document.getElementById(`${prefix}Hour`);
+                const mSelect = document.getElementById(`${prefix}Minute`);
+                
+                hours.forEach(h => {
+                    let opt = document.createElement('option');
+                    opt.value = h.toString();
+                    opt.textContent = h.toString(); // الساعة (1 إلى 12)
+                    hSelect.appendChild(opt);
+                });
+                
+                minutes.forEach(m => {
+                    let opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m; // الدقيقة (00 إلى 59)
+                    mSelect.appendChild(opt);
+                });
+            });
+        }
+
+        function renderDays() {
+            const nav = document.getElementById('daysNav');
+            nav.innerHTML = '';
+            daysAr.forEach((day, index) => {
+                const btn = document.createElement('button');
+                btn.className = `day-tab ${index === currentDay ? 'active' : ''}`;
+                btn.textContent = day;
+                btn.onclick = () => {
+                    currentDay = index;
+                    renderDays();
+                    renderClasses();
+                };
+                nav.appendChild(btn);
+            });
+        }
+
+        function renderClasses() {
+            const list = document.getElementById('classesList');
+            list.innerHTML = '';
+            
+            const dayClasses = classes.filter(c => parseInt(c.day) === currentDay)
+                                      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+            if (dayClasses.length === 0) {
+                list.innerHTML = '<div class="empty-state">لا توجد حصص في هذا اليوم. اضغط على + للإضافة.</div>';
+                return;
+            }
+
+            dayClasses.forEach(cls => {
+                const subject = cls.subject || cls.name || 'مادة غير محددة';
+                const grade = cls.grade || '';
+
+                const card = document.createElement('div');
+                card.className = 'class-card';
+                card.innerHTML = `
+                    <div class="class-info">
+                        <h3>${subject}</h3>
+                        ${grade ? `<p class="grade">🎓 ${grade}</p>` : ''}
+                        <p>🕒 ${formatTimeToDisplay(cls.startTime)} - ${formatTimeToDisplay(cls.endTime)}</p>
+                        <p style="font-size: 0.8rem; color: var(--primary); margin-top:3px;">🔔 تنبيه قبل البداية بـ ${cls.reminder} دقائق</p>
+                    </div>
+                    <div class="actions">
+                        <button class="edit-btn" onclick="editClass('${cls.id}')">تعديل</button>
+                        <button class="delete-btn" onclick="deleteClass('${cls.id}')">حذف</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // دالة لعرض الوقت المحفوظ (24 ساعة) بصيغة صباحاً ومساءً للواجهة
+        function formatTimeToDisplay(time24) {
+            let [hours, minutes] = time24.split(':');
+            let h = parseInt(hours);
+            let ampm = h >= 12 ? 'مساءً' : 'صباحاً';
+            h = h % 12 || 12;
+            return `${h}:${minutes} ${ampm}`;
+        }
+
+        // دالة لتحويل اختيار المستخدم إلى صيغة 24 ساعة للحفظ في النظام
+        function get24HourFormat(prefix) {
+            let h = parseInt(document.getElementById(`${prefix}Hour`).value);
+            let m = document.getElementById(`${prefix}Minute`).value;
+            let ampm = document.getElementById(`${prefix}AmPm`).value;
+
+            if (ampm === 'PM' && h !== 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+
+            return `${h.toString().padStart(2, '0')}:${m}`;
+        }
+
+        // دالة لضبط القوائم المنسدلة عند فتح نافذة التعديل
+        function setTimeSelectorsFrom24(prefix, time24) {
+            if(!time24) return;
+            let [h24, m] = time24.split(':');
+            let h = parseInt(h24);
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            
+            document.getElementById(`${prefix}Hour`).value = h.toString();
+            document.getElementById(`${prefix}Minute`).value = m;
+            document.getElementById(`${prefix}AmPm`).value = ampm;
+        }
+
+        function openModal() {
+            document.getElementById('classId').value = '';
+            document.getElementById('subjectName').value = '';
+            document.getElementById('gradeName').value = '';
+            document.getElementById('classDay').value = currentDay;
+            
+            // قيم افتراضية عند إضافة حصة جديدة: 8:00 صباحاً
+            document.getElementById('startHour').value = '8';
+            document.getElementById('startMinute').value = '00';
+            document.getElementById('startAmPm').value = 'AM';
+            document.getElementById('endHour').value = '8';
+            document.getElementById('endMinute').value = '45';
+            document.getElementById('endAmPm').value = 'AM';
+
+            document.getElementById('reminderMins').value = '5';
+            document.getElementById('modalTitle').textContent = 'إضافة حصة جديدة';
+            document.getElementById('classModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('classModal').style.display = 'none';
+        }
+
+        function saveClass() {
+            const id = document.getElementById('classId').value || Date.now().toString();
+            const subject = document.getElementById('subjectName').value;
+            const grade = document.getElementById('gradeName').value;
+            const day = document.getElementById('classDay').value;
+            const reminder = document.getElementById('reminderMins').value;
+
+            // تحويل الوقت من القوائم المنسدلة إلى صيغة 24 ساعة للنظام
+            const startTime = get24HourFormat('start');
+            const endTime = get24HourFormat('end');
+
+            if(!subject || !grade) {
+                alert("يرجى تعبئة اسم المادة والصف!");
+                return;
+            }
+
+            const newClass = { id, subject, grade, day, startTime, endTime, reminder };
+
+            if(document.getElementById('classId').value) {
+                classes = classes.map(c => c.id === id ? newClass : c);
+            } else {
+                classes.push(newClass);
+            }
+
+            localStorage.setItem('gharsClasses', JSON.stringify(classes));
+            closeModal();
+            renderClasses();
+        }
+
+        function editClass(id) {
+            const cls = classes.find(c => c.id === id);
+            if(!cls) return;
+            document.getElementById('classId').value = cls.id;
+            document.getElementById('subjectName').value = cls.subject || cls.name || '';
+            document.getElementById('gradeName').value = cls.grade || '';
+            document.getElementById('classDay').value = cls.day;
+            document.getElementById('reminderMins').value = cls.reminder;
+            
+            // ضبط القوائم المنسدلة بناءً على الوقت المحفوظ
+            setTimeSelectorsFrom24('start', cls.startTime);
+            setTimeSelectorsFrom24('end', cls.endTime);
+
+            document.getElementById('modalTitle').textContent = 'تعديل الحصة';
+            document.getElementById('classModal').style.display = 'flex';
+        }
+
+        function deleteClass(id) {
+            if(confirm('هل أنت متأكد من الحذف؟')) {
+                classes = classes.filter(c => c.id !== id);
+                localStorage.setItem('gharsClasses', JSON.stringify(classes));
+                renderClasses();
+            }
+        }
+
+        // --- Notification Logic ---
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission();
+            }
+        }
+
+        function sendNotification(title, body) {
+            if (Notification.permission === "granted") {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(title, {
+                        body: body,
+                        icon: 'icon-192.png',
+                        vibrate: [200, 100, 200, 100, 200, 100, 200],
+                        requireInteraction: true
+                    });
+                });
+            }
+        }
+
+        function startBackgroundTracker() {
+            setInterval(() => {
+                const now = new Date();
+                const today = now.getDay();
+                const currentHour = now.getHours();
+                const currentMin = now.getMinutes();
+                const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
+
+                classes.forEach(cls => {
+                    if (parseInt(cls.day) !== today) return;
+
+                    const subjectDisplay = cls.subject || cls.name || 'الحصة';
+                    const gradeDisplay = cls.grade ? ` - ${cls.grade}` : '';
+                    const fullClassName = `${subjectDisplay}${gradeDisplay}`;
+
+                    // التذكير قبل البداية
+                    let [startH, startM] = cls.startTime.split(':').map(Number);
+                    let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
+                    let diffMinsStart = Math.round((startDate - now) / 60000);
+
+                    if (diffMinsStart === parseInt(cls.reminder)) {
+                        sendNotification("تذكير قبل الحصة", `متبقي ${cls.reminder} دقائق على بدء ${fullClassName}`);
+                    }
+
+                    // التذكير عند البداية
+                    if (cls.startTime === currentTime && now.getSeconds() < 30) {
+                        sendNotification("بدأت الحصة!", `حصة ${fullClassName} بدأت الآن.`);
+                    }
+
+                    // التذكير قبل النهاية بـ 5 دقائق
+                    let [endH, endM] = cls.endTime.split(':').map(Number);
+                    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
+                    let diffMinsEnd = Math.round((endDate - now) / 60000);
+
+                    if (diffMinsEnd === 5) {
+                        sendNotification("اقتربت النهاية", `متبقي 5 دقائق على نهاية ${fullClassName}. استعد!`);
+                    }
+                });
+            }, 30000);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker Registered'))
+                    .catch(err => console.log('Service Worker Error', err));
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
