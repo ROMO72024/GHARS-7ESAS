@@ -18,6 +18,10 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
+    - name: Build APK
+          run: |
+            bubblewrap update --force || true
+            yes | bubblewrap build
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
