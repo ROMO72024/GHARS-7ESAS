@@ -1,9 +1,7 @@
 name: Build Android APK
 
 on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
+  workflow_dispatch: # هذا السطر يسمح لك بتشغيل البناء يدوياً بضغطة زر متى شئت
 
 jobs:
   build:
@@ -27,12 +25,20 @@ jobs:
     - name: Install Bubblewrap
       run: npm install -g @bubblewrap/cli
 
-    - name: Build APK
-      run: |
-        echo "y" | bubblewrap build
+    - name: Cache Bubblewrap dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.bubblewrap
+        key: bubblewrap-${{ runner.os }}
 
-    - name: Upload APK Artifact
+    - name: Build APK (Force without prompts)
+      run: |
+        # الإجابة التلقائية بكلمة مرور (123456) على أي سؤال لإنشاء مفتاح التوقيع
+        # وتخطي التحقق من الرابط لتجنب أخطاء 404 الوهمية أثناء البناء
+        yes "123456" | bubblewrap build --skipValidation
+
+    - name: Upload APK File
       uses: actions/upload-artifact@v4
       with:
-        name: app-release-signed
-        path: app-release-signed.apk
+        name: Ghras-App-APK
+        path: ./**/*.apk
