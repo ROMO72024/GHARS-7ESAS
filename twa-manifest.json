@@ -1,0 +1,20 @@
+{
+  "host": "romo72024.github.io",
+  "name": "غرس - تنبيهات الحصص",
+  "shortName": "غرس",
+  "startUrl": "/اسم-المستودع/index.html",
+  "display": "standalone",
+  "themeColor": "#8b206f",
+  "backgroundColor": "#f4f4f9",
+  "enableNotifications": true,
+  "launcherName": "غرس",
+  "packageId": "com.romodemo.ghars",
+  "iconUrl": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+  "maskableIconUrl": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+  "webManifestUrl": "https://romo72024.github.io/اسم-المستودع/manifest.json",
+  "generatorApp": "Bubblewrap CLI",
+  "minSdkVersion": 21,
+  "targetSdkVersion": 33,
+  "compileSdkVersion": 33,
+  "isTwa": true
+}
