@@ -11,6 +11,10 @@
         header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h1 { margin: 0; font-size: 1.2rem; }
         .add-btn { background: white; color: var(--primary); border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        /* زر التجربة الجديد */
+        .test-notif-btn { background: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 8px; margin: 15px; font-weight: bold; cursor: pointer; width: calc(100% - 30px); display: flex; justify-content: center; align-items: center; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
         .days-nav { display: flex; overflow-x: auto; background: var(--primary); padding: 0 10px 10px; gap: 10px; }
         .day-tab { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; cursor: pointer; transition: 0.3s; }
         .day-tab.active { background: white; color: var(--primary); font-weight: bold; }
@@ -48,8 +52,10 @@
         <button class="add-btn" onclick="openModal()">+</button>
     </header>
 
-    <div class="days-nav" id="daysNav"></div>
+    <!-- زر التجربة -->
+    <button class="test-notif-btn" onclick="testNotification()">🔔 جرب الإشعارات الآن</button>
 
+    <div class="days-nav" id="daysNav"></div>
     <div class="container" id="classesList"></div>
 
     <!-- النافذة المنبثقة -->
@@ -247,8 +253,9 @@
             closeModal();
             renderClasses();
             
-            // تحديث الإشعارات فوراً عند الإضافة أو التعديل
+            // تحديث الإشعارات فوراً
             scheduleNativeNotifications(); 
+            alert("تم حفظ الحصة وجدولة التنبيه بنجاح!");
         }
 
         function editClass(id) {
@@ -270,34 +277,53 @@
                 classes = classes.filter(c => c.id !== id);
                 localStorage.setItem('gharsClasses', JSON.stringify(classes));
                 renderClasses();
-                
-                // تحديث الإشعارات فوراً عند الحذف
                 scheduleNativeNotifications();
             }
         }
 
         // =========================================================================
-        // النظام الجديد كلياً: الاعتماد على المنبه الحقيقي للهاتف بدلاً من العداد الزمني
+        // نظام الإشعارات (المعدل والموثق لأندرويد 13+)
         // =========================================================================
 
-        function requestNotificationPermission() {
+        function testNotification() {
             if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.notification) {
-                cordova.plugins.notification.local.hasPermission(function (granted) {
-                    if (!granted) {
-                        cordova.plugins.notification.local.requestPermission(function (granted) {
-                            if (granted) scheduleNativeNotifications();
-                        });
-                    } else {
-                        scheduleNativeNotifications();
-                    }
+                cordova.plugins.notification.local.schedule({
+                    id: 999,
+                    title: 'تجربة ناجحة! 🚀',
+                    text: 'الإشعارات تعمل بكفاءة على جهازك. سيتم تنبيهك في مواعيد حصصك.',
+                    foreground: true,
+                    wakeup: true,
+                    vibrate: true
                 });
+            } else {
+                alert("النظام غير جاهز أو أنك تفتح التطبيق من المتصفح.");
             }
+        }
+
+        function requestNotificationPermission() {
+            if (typeof cordova === 'undefined' || !cordova.plugins) return;
+            
+            // طلب صلاحيات أندرويد 13 للإشعارات بشكل إجباري
+            var permissions = cordova.plugins.permissions;
+            permissions.requestPermission(permissions.POST_NOTIFICATIONS, function(status) {
+                if(status.hasPermission) {
+                    // إذا وافق، نطلب صلاحيات المكتبة نفسها
+                    cordova.plugins.notification.local.hasPermission(function (granted) {
+                        if (!granted) {
+                            cordova.plugins.notification.local.requestPermission(function (granted) {
+                                if (granted) scheduleNativeNotifications();
+                            });
+                        } else {
+                            scheduleNativeNotifications();
+                        }
+                    });
+                }
+            }, null);
         }
 
         function scheduleNativeNotifications() {
             if (typeof cordova === 'undefined' || !cordova.plugins || !cordova.plugins.notification) return;
 
-            // مسح كل الإشعارات السابقة من النظام لإعادة برمجتها بشكل نظيف
             cordova.plugins.notification.local.cancelAll(function() {
                 let scheduledNotifs = [];
                 let notifId = 1;
@@ -311,18 +337,14 @@
                     const reminderMins = parseInt(cls.reminder);
                     const [startH, startM] = cls.startTime.split(':').map(Number);
                     
-                    // سنقوم ببرمجة الإشعار للـ 4 أسابيع القادمة لكل حصة!
-                    // هذا يعني أن الهاتف سيوقظ نفسه بالوقت المناسب تماماً
                     for(let week = 0; week < 4; week++) {
                         let classDate = new Date();
-                        
-                        // حساب تاريخ هذا اليوم (الأحد، الإثنين..)
                         let distance = (targetDay + 7 - classDate.getDay()) % 7;
                         
                         classDate.setDate(classDate.getDate() + distance + (week * 7));
                         classDate.setHours(startH, startM, 0, 0);
 
-                        // 1. التذكير المخصص (مثلاً قبل 5 دقائق)
+                        // 1. التذكير المخصص
                         let reminderDate = new Date(classDate.getTime() - (reminderMins * 60000));
                         if (reminderDate > now) {
                             scheduledNotifs.push({
@@ -331,28 +353,12 @@
                                 text: `متبقي ${reminderMins} دقائق على بدء حصة ${fullClassName}`,
                                 trigger: { at: reminderDate },
                                 foreground: true,
-                                wakeup: true, // لإيقاظ الشاشة
+                                wakeup: true,
                                 vibrate: true
                             });
                         }
 
-                        // 2. التنبيه الثابت قبل 3 دقائق
-                        if (reminderMins !== 3) {
-                            let min3Date = new Date(classDate.getTime() - (3 * 60000));
-                            if (min3Date > now) {
-                                scheduledNotifs.push({
-                                    id: notifId++,
-                                    title: 'تنبيه اقتراب الحصة 🏃‍♂️',
-                                    text: `باقي لحصة ${fullClassName} 3 دقائق فقط!`,
-                                    trigger: { at: min3Date },
-                                    foreground: true,
-                                    wakeup: true, 
-                                    vibrate: true
-                                });
-                            }
-                        }
-
-                        // 3. تنبيه بداية الحصة
+                        // 2. بداية الحصة
                         if (classDate > now) {
                             scheduledNotifs.push({
                                 id: notifId++,
@@ -367,26 +373,17 @@
                     }
                 });
 
-                // إرسال الجدول بالكامل لنظام الأندرويد ليحفظه عنده
                 if (scheduledNotifs.length > 0) {
                     cordova.plugins.notification.local.schedule(scheduledNotifs);
                 }
             });
         }
 
-        // عند فتح التطبيق لأول مرة
         document.addEventListener('deviceready', function() {
             init(); 
-            // طلب الصلاحية وبرمجة المواعيد فوراً
             requestNotificationPermission(); 
-            
-            // في حال فتح المستخدم التطبيق، نقوم بإعادة تحديث المواعيد احتياطياً
-            cordova.plugins.notification.local.on('trigger', function(notification) {
-                // حدث يتم عند انطلاق الإشعار
-            });
         }, false);
 
-        // تشغيل كاحتياط في المتصفح العادي
         if (typeof cordova === 'undefined') {
             init();
         }
