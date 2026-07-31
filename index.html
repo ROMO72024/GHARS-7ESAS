@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>غرس - تنبيهات الحصص</title>
-    <link rel="manifest" href="manifest.json">
+    <!-- تم إزالة رابط manifest.json لأنه لم يعد ضرورياً لتطبيق أوفلاين -->
+    <script src="cordova.js"></script>
     <style>
         :root { --primary: #8b206f; --bg: #f4f4f9; --card: #fff; --text: #333; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; }
@@ -24,7 +25,6 @@
         .edit-btn { background: #eee; color: #333; }
         .delete-btn { background: #ffebee; color: #d32f2f; }
         
-        /* Modal Styles */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: var(--card); padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
         .modal-content h2 { margin-top: 0; color: var(--primary); }
@@ -32,7 +32,6 @@
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
         
-        /* Custom Time Selector Styles */
         .time-selector { display: flex; align-items: center; gap: 5px; background: #f9f9f9; border: 1px solid #ddd; padding: 5px; border-radius: 8px; }
         .time-selector select { border: none; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 8px 5px; font-weight: bold; text-align: center; }
         .time-selector span { font-weight: bold; color: #666; padding: 0 2px; }
@@ -129,7 +128,6 @@
             initTimeSelectors();
             renderDays();
             renderClasses();
-            requestNotificationPermission();
             startBackgroundTracker();
         }
 
@@ -312,23 +310,20 @@
             }
         }
 
-        // --- Notification Logic ---
-        function requestNotificationPermission() {
-            if ("Notification" in window) {
-                Notification.requestPermission();
-            }
-        }
-
+        // --- تعديل نظام الإشعارات ليعمل أوفلاين كلياً عبر كوردوفا ---
         function sendNotification(title, body) {
-            if (Notification.permission === "granted") {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification(title, {
-                        body: body,
-                        icon: 'icon-192.png',
-                        vibrate: [200, 100, 200, 100, 200, 100, 200],
-                        requireInteraction: true
-                    });
+            if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.notification) {
+                cordova.plugins.notification.local.schedule({
+                    title: title,
+                    text: body,
+                    foreground: true,
+                    vibrate: true
                 });
+            } else {
+                // في حالة التشغيل على المتصفح للتجربة
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification(title, { body: body });
+                }
             }
         }
 
@@ -344,11 +339,9 @@
                     if (parseInt(cls.day) !== today) return;
 
                     const subjectDisplay = cls.subject || cls.name || 'الحصة';
-                    // التعديل: إضافة كلمة "لصف" بين المادة والشعبة
                     const gradeDisplay = cls.grade ? ` للصف ${cls.grade}` : '';
                     const fullClassName = `${subjectDisplay}${gradeDisplay}`;
 
-                    // التذكير قبل البداية (المخصص من المستخدم)
                     let [startH, startM] = cls.startTime.split(':').map(Number);
                     let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
                     let diffMinsStart = Math.round((startDate - now) / 60000);
@@ -357,17 +350,14 @@
                         sendNotification("تذكير قبل الحصة", `متبقي ${cls.reminder} دقائق على بدء حصة ${fullClassName}`);
                     }
 
-                    // التعديل: التذكير الإضافي الثابت قبل 3 دقائق
                     if (diffMinsStart === 3 && parseInt(cls.reminder) !== 3) {
                         sendNotification("تنبيه اقتراب الحصة", `باقي لحصة ${fullClassName} 3 دقائق`);
                     }
 
-                    // التذكير عند البداية (تعديل النص)
                     if (cls.startTime === currentTime && now.getSeconds() < 30) {
                         sendNotification("بدأت الحصة!", `حصة ${fullClassName} بدأت الآن.`);
                     }
 
-                    // التذكير قبل النهاية بـ 5 دقائق
                     let [endH, endM] = cls.endTime.split(':').map(Number);
                     let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
                     let diffMinsEnd = Math.round((endDate - now) / 60000);
@@ -379,15 +369,24 @@
             }, 30000);
         }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker Registered'))
-                    .catch(err => console.log('Service Worker Error', err));
-            });
-        }
+        // تهيئة التطبيق وتشغيل ميزة الخلفية عند فتح التطبيق
+        document.addEventListener('deviceready', function() {
+            if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.backgroundMode) {
+                cordova.plugins.backgroundMode.enable();
+                cordova.plugins.backgroundMode.on('activate', function() {
+                    cordova.plugins.backgroundMode.disableWebViewOptimizations();
+                });
+            }
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+            init();
+        }, false);
 
-        init();
+        // تشغيل كاحتياط في حال فتحه كصفحة ويب
+        if (typeof cordova === 'undefined') {
+            init();
+        }
     </script>
 </body>
 </html>
