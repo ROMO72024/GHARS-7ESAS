@@ -27,22 +27,17 @@ jobs:
 
     - name: Build Offline Android App
       run: |
-        # إنشاء مشروع أندرويد محلي منفصل عن الإنترنت
         cordova create app com.romodemo.ghars "GharsApp"
         cd app
-        
-        # التحديث للإصدار 13 لحل مشكلة السيرفر وتوافق الإشعارات
         cordova platform add android@13.0.0
         
-        # إضافة مكتبات الإشعارات المحلية والعمل في الخلفية
-        cordova plugin add cordova-plugin-local-notification
+        # استخدام مكتبة الإشعارات المحدثة التي تعتمد على منبه النظام (تدعم أندرويد 12 و 13)
+        cordova plugin add cordova-plugin-local-notification-12
         cordova plugin add cordova-plugin-background-mode
         
-        # مسح الملفات الافتراضية ونسخ ملف التطبيق الخاص بك
         rm -rf www/*
         cp ../index.html www/index.html
         
-        # بناء ملف الـ APK
         cordova build android --debug
 
     - name: Upload APK File
