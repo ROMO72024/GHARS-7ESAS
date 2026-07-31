@@ -31,9 +31,12 @@ jobs:
         cd app
         cordova platform add android@13.0.0
         
-        # استخدام مكتبة الإشعارات المحدثة التي تعتمد على منبه النظام (تدعم أندرويد 12 و 13)
+        # إضافة مكتبات الإشعارات وصلاحيات الأندرويد
         cordova plugin add cordova-plugin-local-notification-12
-        cordova plugin add cordova-plugin-background-mode
+        cordova plugin add cordova-plugin-android-permissions
+        
+        # حقن صلاحيات المنبه الدقيق والإشعارات في قلب التطبيق ليعمل على أندرويد 13+
+        sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' platforms/android/app/src/main/AndroidManifest.xml
         
         rm -rf www/*
         cp ../index.html www/index.html
