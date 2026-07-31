@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>غرس - تنبيهات الحصص</title>
-    <!-- تم إزالة رابط manifest.json لأنه لم يعد ضرورياً لتطبيق أوفلاين -->
     <script src="cordova.js"></script>
     <style>
         :root { --primary: #8b206f; --bg: #f4f4f9; --card: #fff; --text: #333; }
@@ -53,7 +52,7 @@
 
     <div class="container" id="classesList"></div>
 
-    <!-- Add/Edit Modal -->
+    <!-- النافذة المنبثقة -->
     <div class="modal" id="classModal">
         <div class="modal-content">
             <h2 id="modalTitle">إضافة حصة جديدة</h2>
@@ -85,26 +84,16 @@
             <div class="form-group">
                 <label>وقت البداية</label>
                 <div class="time-selector">
-                    <select id="startHour" title="الساعة"></select>
-                    <span>:</span>
-                    <select id="startMinute" title="الدقيقة"></select>
-                    <select id="startAmPm">
-                        <option value="AM">صباحاً</option>
-                        <option value="PM">مساءً</option>
-                    </select>
+                    <select id="startHour"></select><span>:</span><select id="startMinute"></select>
+                    <select id="startAmPm"><option value="AM">صباحاً</option><option value="PM">مساءً</option></select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label>وقت النهاية</label>
                 <div class="time-selector">
-                    <select id="endHour" title="الساعة"></select>
-                    <span>:</span>
-                    <select id="endMinute" title="الدقيقة"></select>
-                    <select id="endAmPm">
-                        <option value="AM">صباحاً</option>
-                        <option value="PM">مساءً</option>
-                    </select>
+                    <select id="endHour"></select><span>:</span><select id="endMinute"></select>
+                    <select id="endAmPm"><option value="AM">صباحاً</option><option value="PM">مساءً</option></select>
                 </div>
             </div>
 
@@ -128,7 +117,6 @@
             initTimeSelectors();
             renderDays();
             renderClasses();
-            startBackgroundTracker();
         }
 
         function initTimeSelectors() {
@@ -138,18 +126,17 @@
             ['start', 'end'].forEach(prefix => {
                 const hSelect = document.getElementById(`${prefix}Hour`);
                 const mSelect = document.getElementById(`${prefix}Minute`);
+                hSelect.innerHTML = ''; mSelect.innerHTML = '';
                 
                 hours.forEach(h => {
                     let opt = document.createElement('option');
-                    opt.value = h.toString();
-                    opt.textContent = h.toString();
+                    opt.value = h.toString(); opt.textContent = h.toString();
                     hSelect.appendChild(opt);
                 });
                 
                 minutes.forEach(m => {
                     let opt = document.createElement('option');
-                    opt.value = m;
-                    opt.textContent = m;
+                    opt.value = m; opt.textContent = m;
                     mSelect.appendChild(opt);
                 });
             });
@@ -162,11 +149,7 @@
                 const btn = document.createElement('button');
                 btn.className = `day-tab ${index === currentDay ? 'active' : ''}`;
                 btn.textContent = day;
-                btn.onclick = () => {
-                    currentDay = index;
-                    renderDays();
-                    renderClasses();
-                };
+                btn.onclick = () => { currentDay = index; renderDays(); renderClasses(); };
                 nav.appendChild(btn);
             });
         }
@@ -174,9 +157,7 @@
         function renderClasses() {
             const list = document.getElementById('classesList');
             list.innerHTML = '';
-            
-            const dayClasses = classes.filter(c => parseInt(c.day) === currentDay)
-                                      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+            const dayClasses = classes.filter(c => parseInt(c.day) === currentDay).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
             if (dayClasses.length === 0) {
                 list.innerHTML = '<div class="empty-state">لا توجد حصص في هذا اليوم. اضغط على + للإضافة.</div>';
@@ -186,7 +167,6 @@
             dayClasses.forEach(cls => {
                 const subject = cls.subject || cls.name || 'مادة غير محددة';
                 const grade = cls.grade || '';
-
                 const card = document.createElement('div');
                 card.className = 'class-card';
                 card.innerHTML = `
@@ -217,10 +197,8 @@
             let h = parseInt(document.getElementById(`${prefix}Hour`).value);
             let m = document.getElementById(`${prefix}Minute`).value;
             let ampm = document.getElementById(`${prefix}AmPm`).value;
-
             if (ampm === 'PM' && h !== 12) h += 12;
             if (ampm === 'AM' && h === 12) h = 0;
-
             return `${h.toString().padStart(2, '0')}:${m}`;
         }
 
@@ -230,7 +208,6 @@
             let h = parseInt(h24);
             let ampm = h >= 12 ? 'PM' : 'AM';
             h = h % 12 || 12;
-            
             document.getElementById(`${prefix}Hour`).value = h.toString();
             document.getElementById(`${prefix}Minute`).value = m;
             document.getElementById(`${prefix}AmPm`).value = ampm;
@@ -241,22 +218,12 @@
             document.getElementById('subjectName').value = '';
             document.getElementById('gradeName').value = '';
             document.getElementById('classDay').value = currentDay;
-            
-            document.getElementById('startHour').value = '8';
-            document.getElementById('startMinute').value = '00';
-            document.getElementById('startAmPm').value = 'AM';
-            document.getElementById('endHour').value = '8';
-            document.getElementById('endMinute').value = '45';
-            document.getElementById('endAmPm').value = 'AM';
-
             document.getElementById('reminderMins').value = '5';
             document.getElementById('modalTitle').textContent = 'إضافة حصة جديدة';
             document.getElementById('classModal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('classModal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('classModal').style.display = 'none'; }
 
         function saveClass() {
             const id = document.getElementById('classId').value || Date.now().toString();
@@ -264,17 +231,12 @@
             const grade = document.getElementById('gradeName').value;
             const day = document.getElementById('classDay').value;
             const reminder = document.getElementById('reminderMins').value;
-
             const startTime = get24HourFormat('start');
             const endTime = get24HourFormat('end');
 
-            if(!subject || !grade) {
-                alert("يرجى تعبئة اسم المادة والصف!");
-                return;
-            }
+            if(!subject || !grade) { alert("يرجى تعبئة اسم المادة والصف!"); return; }
 
             const newClass = { id, subject, grade, day, startTime, endTime, reminder };
-
             if(document.getElementById('classId').value) {
                 classes = classes.map(c => c.id === id ? newClass : c);
             } else {
@@ -284,6 +246,9 @@
             localStorage.setItem('gharsClasses', JSON.stringify(classes));
             closeModal();
             renderClasses();
+            
+            // تحديث الإشعارات فوراً عند الإضافة أو التعديل
+            scheduleNativeNotifications(); 
         }
 
         function editClass(id) {
@@ -294,10 +259,8 @@
             document.getElementById('gradeName').value = cls.grade || '';
             document.getElementById('classDay').value = cls.day;
             document.getElementById('reminderMins').value = cls.reminder;
-            
             setTimeSelectorsFrom24('start', cls.startTime);
             setTimeSelectorsFrom24('end', cls.endTime);
-
             document.getElementById('modalTitle').textContent = 'تعديل الحصة';
             document.getElementById('classModal').style.display = 'flex';
         }
@@ -307,83 +270,123 @@
                 classes = classes.filter(c => c.id !== id);
                 localStorage.setItem('gharsClasses', JSON.stringify(classes));
                 renderClasses();
+                
+                // تحديث الإشعارات فوراً عند الحذف
+                scheduleNativeNotifications();
             }
         }
 
-        // --- تعديل نظام الإشعارات ليعمل أوفلاين كلياً عبر كوردوفا ---
-        function sendNotification(title, body) {
+        // =========================================================================
+        // النظام الجديد كلياً: الاعتماد على المنبه الحقيقي للهاتف بدلاً من العداد الزمني
+        // =========================================================================
+
+        function requestNotificationPermission() {
             if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.notification) {
-                cordova.plugins.notification.local.schedule({
-                    title: title,
-                    text: body,
-                    foreground: true,
-                    vibrate: true
+                cordova.plugins.notification.local.hasPermission(function (granted) {
+                    if (!granted) {
+                        cordova.plugins.notification.local.requestPermission(function (granted) {
+                            if (granted) scheduleNativeNotifications();
+                        });
+                    } else {
+                        scheduleNativeNotifications();
+                    }
                 });
-            } else {
-                // في حالة التشغيل على المتصفح للتجربة
-                if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification(title, { body: body });
-                }
             }
         }
 
-        function startBackgroundTracker() {
-            setInterval(() => {
+        function scheduleNativeNotifications() {
+            if (typeof cordova === 'undefined' || !cordova.plugins || !cordova.plugins.notification) return;
+
+            // مسح كل الإشعارات السابقة من النظام لإعادة برمجتها بشكل نظيف
+            cordova.plugins.notification.local.cancelAll(function() {
+                let scheduledNotifs = [];
+                let notifId = 1;
                 const now = new Date();
-                const today = now.getDay();
-                const currentHour = now.getHours();
-                const currentMin = now.getMinutes();
-                const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
 
                 classes.forEach(cls => {
-                    if (parseInt(cls.day) !== today) return;
-
                     const subjectDisplay = cls.subject || cls.name || 'الحصة';
                     const gradeDisplay = cls.grade ? ` للصف ${cls.grade}` : '';
                     const fullClassName = `${subjectDisplay}${gradeDisplay}`;
+                    const targetDay = parseInt(cls.day); 
+                    const reminderMins = parseInt(cls.reminder);
+                    const [startH, startM] = cls.startTime.split(':').map(Number);
+                    
+                    // سنقوم ببرمجة الإشعار للـ 4 أسابيع القادمة لكل حصة!
+                    // هذا يعني أن الهاتف سيوقظ نفسه بالوقت المناسب تماماً
+                    for(let week = 0; week < 4; week++) {
+                        let classDate = new Date();
+                        
+                        // حساب تاريخ هذا اليوم (الأحد، الإثنين..)
+                        let distance = (targetDay + 7 - classDate.getDay()) % 7;
+                        
+                        classDate.setDate(classDate.getDate() + distance + (week * 7));
+                        classDate.setHours(startH, startM, 0, 0);
 
-                    let [startH, startM] = cls.startTime.split(':').map(Number);
-                    let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
-                    let diffMinsStart = Math.round((startDate - now) / 60000);
+                        // 1. التذكير المخصص (مثلاً قبل 5 دقائق)
+                        let reminderDate = new Date(classDate.getTime() - (reminderMins * 60000));
+                        if (reminderDate > now) {
+                            scheduledNotifs.push({
+                                id: notifId++,
+                                title: 'تذكير قبل الحصة ⏳',
+                                text: `متبقي ${reminderMins} دقائق على بدء حصة ${fullClassName}`,
+                                trigger: { at: reminderDate },
+                                foreground: true,
+                                wakeup: true, // لإيقاظ الشاشة
+                                vibrate: true
+                            });
+                        }
 
-                    if (diffMinsStart === parseInt(cls.reminder)) {
-                        sendNotification("تذكير قبل الحصة", `متبقي ${cls.reminder} دقائق على بدء حصة ${fullClassName}`);
-                    }
+                        // 2. التنبيه الثابت قبل 3 دقائق
+                        if (reminderMins !== 3) {
+                            let min3Date = new Date(classDate.getTime() - (3 * 60000));
+                            if (min3Date > now) {
+                                scheduledNotifs.push({
+                                    id: notifId++,
+                                    title: 'تنبيه اقتراب الحصة 🏃‍♂️',
+                                    text: `باقي لحصة ${fullClassName} 3 دقائق فقط!`,
+                                    trigger: { at: min3Date },
+                                    foreground: true,
+                                    wakeup: true, 
+                                    vibrate: true
+                                });
+                            }
+                        }
 
-                    if (diffMinsStart === 3 && parseInt(cls.reminder) !== 3) {
-                        sendNotification("تنبيه اقتراب الحصة", `باقي لحصة ${fullClassName} 3 دقائق`);
-                    }
-
-                    if (cls.startTime === currentTime && now.getSeconds() < 30) {
-                        sendNotification("بدأت الحصة!", `حصة ${fullClassName} بدأت الآن.`);
-                    }
-
-                    let [endH, endM] = cls.endTime.split(':').map(Number);
-                    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
-                    let diffMinsEnd = Math.round((endDate - now) / 60000);
-
-                    if (diffMinsEnd === 5) {
-                        sendNotification("اقتربت النهاية", `متبقي 5 دقائق على نهاية حصة ${fullClassName}. استعد!`);
+                        // 3. تنبيه بداية الحصة
+                        if (classDate > now) {
+                            scheduledNotifs.push({
+                                id: notifId++,
+                                title: 'بدأت الحصة! 🔔',
+                                text: `حصة ${fullClassName} بدأت الآن.`,
+                                trigger: { at: classDate },
+                                foreground: true,
+                                wakeup: true, 
+                                vibrate: true
+                            });
+                        }
                     }
                 });
-            }, 30000);
+
+                // إرسال الجدول بالكامل لنظام الأندرويد ليحفظه عنده
+                if (scheduledNotifs.length > 0) {
+                    cordova.plugins.notification.local.schedule(scheduledNotifs);
+                }
+            });
         }
 
-        // تهيئة التطبيق وتشغيل ميزة الخلفية عند فتح التطبيق
+        // عند فتح التطبيق لأول مرة
         document.addEventListener('deviceready', function() {
-            if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.backgroundMode) {
-                cordova.plugins.backgroundMode.enable();
-                cordova.plugins.backgroundMode.on('activate', function() {
-                    cordova.plugins.backgroundMode.disableWebViewOptimizations();
-                });
-            }
-            if ("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-            init();
+            init(); 
+            // طلب الصلاحية وبرمجة المواعيد فوراً
+            requestNotificationPermission(); 
+            
+            // في حال فتح المستخدم التطبيق، نقوم بإعادة تحديث المواعيد احتياطياً
+            cordova.plugins.notification.local.on('trigger', function(notification) {
+                // حدث يتم عند انطلاق الإشعار
+            });
         }, false);
 
-        // تشغيل كاحتياط في حال فتحه كصفحة ويب
+        // تشغيل كاحتياط في المتصفح العادي
         if (typeof cordova === 'undefined') {
             init();
         }
