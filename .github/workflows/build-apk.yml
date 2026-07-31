@@ -1,7 +1,7 @@
-name: Build Android APK
+name: Build Offline APK
 
 on:
-  workflow_dispatch: # هذا السطر يسمح لك بتشغيل البناء يدوياً بضغطة زر متى شئت
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -11,34 +11,42 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+    - name: Install Cordova
+      run: npm install -g cordova
 
-    - name: Install Bubblewrap
-      run: npm install -g @bubblewrap/cli
-
-    - name: Cache Bubblewrap dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.bubblewrap
-        key: bubblewrap-${{ runner.os }}
-
-    - name: Build APK (Force without prompts)
+    - name: Build Offline Android App
       run: |
-        # الإجابة التلقائية بكلمة مرور (123456) على أي سؤال لإنشاء مفتاح التوقيع
-        # وتخطي التحقق من الرابط لتجنب أخطاء 404 الوهمية أثناء البناء
-        yes "123456" | bubblewrap build --skipValidation
+        # إنشاء مشروع أندرويد محلي منفصل عن الإنترنت
+        cordova create app com.romodemo.ghars "GharsApp"
+        cd app
+        
+        # إضافة بيئة أندرويد
+        cordova platform add android@12.0.1
+        
+        # إضافة مكتبات الإشعارات المحلية والعمل في الخلفية
+        cordova plugin add cordova-plugin-local-notification
+        cordova plugin add cordova-plugin-background-mode
+        
+        # مسح الملفات الافتراضية ونسخ ملف التطبيق الخاص بك
+        rm -rf www/*
+        cp ../index.html www/index.html
+        
+        # بناء ملف الـ APK
+        cordova build android --debug
 
     - name: Upload APK File
       uses: actions/upload-artifact@v4
       with:
-        name: Ghras-App-APK
-        path: ./**/*.apk
+        name: Ghars-Offline-APK
+        path: app/platforms/android/app/build/outputs/apk/debug/*.apk
