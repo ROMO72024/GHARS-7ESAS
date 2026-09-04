@@ -1,802 +1,111 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>غرس - منبه الحصص</title>
-    <script src="cordova.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #8b206f; /* الأرجواني الغني */
-            --primary-light: #a43a88;
-            --primary-dark: #6a1653;
-            --secondary: #b3d39c; /* الأخضر الشاحب */
-            --bg-color: #f4f6f8;
-            --surface: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            --radius-lg: 24px;
-            --radius-md: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 90px;
-            overflow-x: hidden;
-        }
-
-        /* رأس التطبيق (Header) */
-        .app-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            padding: 25px 20px 30px;
-            border-bottom-left-radius: var(--radius-lg);
-            border-bottom-right-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-title {
-            margin: 0;
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .header-subtitle {
-            margin: 5px 0 0 0;
-            font-size: 0.9rem;
-            font-weight: 400;
-            opacity: 0.9;
-        }
-
-        .add-btn-main {
-            background: var(--surface);
-            color: var(--primary);
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .add-btn-main:active {
-            transform: scale(0.9);
-        }
-
-        /* شريط التنقل بين الأيام */
-        .days-container {
-            margin: 20px 15px 10px;
-            padding: 5px;
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-        }
-
-        .days-nav {
-            display: flex;
-            overflow-x: auto;
-            gap: 8px;
-            padding: 10px;
-            scrollbar-width: none; /* Firefox */
-        }
-        .days-nav::-webkit-scrollbar { display: none; } /* Chrome */
-
-        .day-tab {
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-
-        .day-tab.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 8px rgba(139, 32, 111, 0.3);
-        }
-
-        /* زر التجربة (عائم في الأسفل) */
-        .test-btn-floating {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--secondary);
-            color: var(--primary-dark);
-            border: none;
-            padding: 14px 28px;
-            border-radius: 30px;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 1.1rem;
-            box-shadow: var(--shadow-lg);
-            cursor: pointer;
-            z-index: 90;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: max-content;
-        }
-        
-        .test-btn-floating:active {
-            transform: translateX(-50%) scale(0.95);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* قائمة الحصص */
-        .classes-container {
-            padding: 15px;
-        }
-
-        .class-card {
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            overflow: hidden;
-            border-right: 6px solid var(--secondary);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            transition: transform 0.2s;
-        }
-
-        .class-card:active {
-            transform: scale(0.98);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .subject-info h3 {
-            margin: 0;
-            color: var(--primary);
-            font-size: 1.3rem;
-            font-weight: 800;
-        }
-
-        .subject-info .grade {
-            margin: 4px 0 0 0;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .time-badge {
-            background: #f1f5f9;
-            color: var(--text-dark);
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .reminder-info {
-            background: rgba(179, 211, 156, 0.2);
-            color: var(--primary-dark);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 15px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-edit {
-            background: #f1f5f9;
-            color: var(--text-dark);
-        }
-        .btn-edit:active { background: #e2e8f0; }
-
-        .btn-delete {
-            background: #fef2f2;
-            color: #ef4444;
-        }
-        .btn-delete:active { background: #fee2e2; }
-
-        /* النافذة المنبثقة (Modal) */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: flex-end; /* لظهورها من الأسفل */
-        }
-
-        .modal-content {
-            background: var(--surface);
-            width: 100%;
-            border-top-left-radius: 30px;
-            border-top-right-radius: 30px;
-            padding: 30px 25px;
-            box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            color: var(--primary);
-            font-size: 1.5rem;
-            font-weight: 800;
-        }
-
-        .close-btn {
-            background: #f1f5f9;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        .form-group { margin-bottom: 20px; }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 700;
-            color: var(--text-dark);
-            font-size: 0.95rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 1rem;
-            color: var(--text-dark);
-            background: #f8fafc;
-            transition: border-color 0.3s;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: var(--surface);
-        }
-
-        .time-group {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .time-group > div { flex: 1; }
-
-        .time-selector {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 5px;
-        }
-        
-        .time-selector:focus-within { border-color: var(--primary); }
-
-        .time-selector select {
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--text-dark);
-            padding: 8px 4px;
-            width: 100%;
-            outline: none;
-            appearance: none;
-            text-align: center;
-        }
-
-        .modal-footer {
-            margin-top: 30px;
-        }
-
-        .btn-save {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-family: inherit;
-            font-size: 1.2rem;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(139, 32, 111, 0.3);
-            transition: transform 0.2s;
-        }
-        
-        .btn-save:active { transform: scale(0.98); }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-        
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#83145f">
+  <meta name="color-scheme" content="light">
+  <title>غرس | منبّه الحصص</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="cordova.js"></script>
 </head>
 <body>
-
-    <header class="app-header">
-        <div class="header-content">
-            <div>
-                <h1 class="header-title">جدول الحصص</h1>
-                <p class="header-subtitle">روضة ومدرسة غرس الحديثة</p>
-            </div>
-            <button class="add-btn-main" onclick="openModal()">+</button>
-        </div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo"><img src="icon.png" alt="شعار منبّه غرس"></span>
+        <span>
+          <strong>منبّه غرس</strong>
+          <small>مدرسة وروضة غرس الحديثة</small>
+        </span>
+      </div>
+      <button class="icon-button" id="headerAddBtn" type="button" aria-label="إضافة حصة"><span aria-hidden="true">＋</span></button>
     </header>
 
-    <div class="days-container">
-        <div class="days-nav" id="daysNav"></div>
-    </div>
-
-    <div class="classes-container" id="classesList"></div>
-
-    <button class="test-btn-floating" onclick="testNotification()">
-        🔔 تجربة الإشعارات
-    </button>
-
-    <!-- النافذة المنبثقة -->
-    <div class="modal-overlay" id="classModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">إضافة حصة جديدة</h2>
-                <button class="close-btn" onclick="closeModal()">✕</button>
-            </div>
-            
-            <input type="hidden" id="classId">
-            
-            <div class="form-group">
-                <label>اسم المادة / البرنامج</label>
-                <input type="text" class="form-input" id="subjectName" placeholder="مثال: المبرمج الصغير" required>
-            </div>
-            
-            <div class="form-group">
-                <label>الصف / الشعبة</label>
-                <input type="text" class="form-input" id="gradeName" placeholder="مثال: التمهيدي" required>
-            </div>
-
-            <div class="form-group">
-                <label>اليوم</label>
-                <select class="form-input" id="classDay">
-                    <option value="0">الأحد</option>
-                    <option value="1">الإثنين</option>
-                    <option value="2">الثلاثاء</option>
-                    <option value="3">الأربعاء</option>
-                    <option value="4">الخميس</option>
-                    <option value="5">الجمعة</option>
-                    <option value="6">السبت</option>
-                </select>
-            </div>
-            
-            <div class="time-group">
-                <div class="form-group">
-                    <label>وقت البداية</label>
-                    <div class="time-selector">
-                        <select id="startHour"></select>
-                        <span style="font-weight:bold">:</span>
-                        <select id="startMinute"></select>
-                        <select id="startAmPm" style="font-size:0.9rem"><option value="AM">ص</option><option value="PM">م</option></select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>وقت النهاية</label>
-                    <div class="time-selector">
-                        <select id="endHour"></select>
-                        <span style="font-weight:bold">:</span>
-                        <select id="endMinute"></select>
-                        <select id="endAmPm" style="font-size:0.9rem"><option value="AM">ص</option><option value="PM">م</option></select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>تنبيه قبل الحصة بـ (دقائق)</label>
-                <select class="form-input" id="reminderMins">
-                    <option value="5">5 دقائق</option>
-                    <option value="10">10 دقائق</option>
-                    <option value="15">15 دقيقة</option>
-                    <option value="30">30 دقيقة</option>
-                </select>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-save" onclick="saveClass()">حفظ التنبيه</button>
-            </div>
+    <main>
+      <section class="hero-card" aria-labelledby="todayHeading">
+        <div class="hero-copy">
+          <p class="eyebrow" id="todayDate">جدول اليوم</p>
+          <h1 id="todayHeading">حصصك في موعدها</h1>
+          <p id="nextClassText">أضف حصصك وسيعمل التنبيه تلقائيًا دون إنترنت.</p>
         </div>
-    </div>
+        <div class="today-count" aria-label="عدد حصص اليوم"><strong id="todayCount">0</strong><span>حصة اليوم</span></div>
+      </section>
 
-    <script>
-        let classes = JSON.parse(localStorage.getItem('gharsClasses')) || [];
-        let currentDay = new Date().getDay(); 
-        const daysAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+      <section class="status-card" id="notificationStatus" aria-live="polite">
+        <span class="status-icon" aria-hidden="true">🔔</span>
+        <span class="status-copy">
+          <strong id="statusTitle">جاهز للتنبيه</strong>
+          <small id="statusText">سيُطلب إذن الإشعارات عند أول تشغيل.</small>
+        </span>
+        <button class="text-button hidden" id="exactAlarmBtn" type="button">ضبط الدقة</button>
+      </section>
 
-        function init() {
-            initTimeSelectors();
-            renderDays();
-            renderClasses();
-        }
+      <section class="quick-actions" aria-label="إجراءات سريعة">
+        <button class="primary-action" id="mainAddBtn" type="button"><span aria-hidden="true">＋</span>إضافة حصة</button>
+        <button class="secondary-action" id="testNotificationBtn" type="button"><span aria-hidden="true">♫</span>تجربة الصوت</button>
+      </section>
 
-        function initTimeSelectors() {
-            const hours = Array.from({length: 12}, (_, i) => i + 1);
-            const minutes = Array.from({length: 12}, (_, i) => (i * 5).toString().padStart(2, '0')); // دقائق مضاعفات 5 لسهولة الاختيار
-            
-            ['start', 'end'].forEach(prefix => {
-                const hSelect = document.getElementById(`${prefix}Hour`);
-                const mSelect = document.getElementById(`${prefix}Minute`);
-                hSelect.innerHTML = ''; mSelect.innerHTML = '';
-                
-                hours.forEach(h => {
-                    let opt = document.createElement('option');
-                    opt.value = h.toString(); opt.textContent = h.toString();
-                    hSelect.appendChild(opt);
-                });
-                
-                minutes.forEach(m => {
-                    let opt = document.createElement('option');
-                    opt.value = m; opt.textContent = m;
-                    mSelect.appendChild(opt);
-                });
-            });
-        }
+      <section class="schedule-section" aria-labelledby="scheduleHeading">
+        <div class="section-heading">
+          <div><p class="eyebrow">الجدول الأسبوعي</p><h2 id="scheduleHeading">الحصص</h2></div>
+          <span class="class-total" id="classTotal">0 حصة</span>
+        </div>
+        <nav class="days-nav" id="daysNav" aria-label="أيام الأسبوع"></nav>
+        <div class="classes-list" id="classesList" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
 
-        function renderDays() {
-            const nav = document.getElementById('daysNav');
-            nav.innerHTML = '';
-            daysAr.forEach((day, index) => {
-                const btn = document.createElement('button');
-                btn.className = `day-tab ${index === currentDay ? 'active' : ''}`;
-                btn.textContent = day;
-                btn.onclick = () => { currentDay = index; renderDays(); renderClasses(); };
-                nav.appendChild(btn);
-            });
-            // تمرير الشريط تلقائياً لليوم الحالي
-            const activeBtn = nav.querySelector('.active');
-            if(activeBtn) {
-                nav.scrollTo({ left: activeBtn.offsetLeft - 20, behavior: 'smooth' });
-            }
-        }
+  <button class="fab" id="floatingAddBtn" type="button" aria-label="إضافة حصة جديدة">＋</button>
 
-        function renderClasses() {
-            const list = document.getElementById('classesList');
-            list.innerHTML = '';
-            const dayClasses = classes.filter(c => parseInt(c.day) === currentDay).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  <div class="modal" id="classModal" aria-hidden="true">
+    <button class="modal-backdrop" id="modalBackdrop" type="button" aria-label="إغلاق"></button>
+    <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="modal-heading">
+        <div><p class="eyebrow">تفاصيل الجدول</p><h2 id="modalTitle">إضافة حصة جديدة</h2></div>
+        <button class="close-button" id="closeModalBtn" type="button" aria-label="إغلاق">×</button>
+      </div>
 
-            if (dayClasses.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <h3>لا توجد حصص اليوم</h3>
-                        <p>اضغط على زر (+) لإضافة جدولك</p>
-                    </div>`;
-                return;
-            }
+      <form id="classForm" novalidate>
+        <input type="hidden" id="classId">
+        <div class="field">
+          <label for="subjectName">اسم المادة أو البرنامج</label>
+          <input type="text" id="subjectName" maxlength="80" placeholder="مثال: اللغة العربية" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="gradeName">الصف أو الشعبة</label>
+          <input type="text" id="gradeName" maxlength="80" placeholder="مثال: الأول - 1" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="classDay">اليوم</label>
+          <select id="classDay" required>
+            <option value="0">الأحد</option><option value="1">الإثنين</option><option value="2">الثلاثاء</option>
+            <option value="3">الأربعاء</option><option value="4">الخميس</option><option value="5">الجمعة</option><option value="6">السبت</option>
+          </select>
+        </div>
+        <div class="time-grid">
+          <div class="field"><label for="startTime">وقت البداية</label><input type="time" id="startTime" value="11:40" step="60" required></div>
+          <div class="field"><label for="endTime">وقت النهاية</label><input type="time" id="endTime" value="11:55" step="60" required></div>
+        </div>
+        <div class="field reminder-field">
+          <label for="reminderMins">التنبيه قبل الحصة</label>
+          <div class="number-input"><input type="number" id="reminderMins" value="5" min="0" step="1" inputmode="numeric" required><span>دقيقة</span></div>
+          <small>اكتب عدد الدقائق الذي تريده قبل بداية الحصة.</small>
+        </div>
+        <p class="form-error" id="formError" role="alert"></p>
+        <div class="modal-actions">
+          <button class="save-button" type="submit">حفظ وجدولة التنبيه</button>
+          <button class="cancel-button" id="cancelModalBtn" type="button">إلغاء</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
-            dayClasses.forEach(cls => {
-                const subject = cls.subject || cls.name || 'مادة غير محددة';
-                const grade = cls.grade || '';
-                const card = document.createElement('div');
-                card.className = 'class-card';
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div class="subject-info">
-                            <h3>${subject}</h3>
-                            ${grade ? `<p class="grade">🎓 ${grade}</p>` : ''}
-                        </div>
-                        <div class="time-badge">
-                            🕒 ${formatTimeToDisplay(cls.startTime)}
-                        </div>
-                    </div>
-                    <div>
-                        <span class="reminder-info">🔔 تنبيه قبل ${cls.reminder} دقائق</span>
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn btn-edit" onclick="editClass('${cls.id}')">تعديل</button>
-                        <button class="action-btn btn-delete" onclick="deleteClass('${cls.id}')">حذف</button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
-
-        function formatTimeToDisplay(time24) {
-            let [hours, minutes] = time24.split(':');
-            let h = parseInt(hours);
-            let ampm = h >= 12 ? 'م' : 'ص';
-            h = h % 12 || 12;
-            return `${h}:${minutes} ${ampm}`;
-        }
-
-        function get24HourFormat(prefix) {
-            let h = parseInt(document.getElementById(`${prefix}Hour`).value);
-            let m = document.getElementById(`${prefix}Minute`).value;
-            let ampm = document.getElementById(`${prefix}AmPm`).value;
-            if (ampm === 'PM' && h !== 12) h += 12;
-            if (ampm === 'AM' && h === 12) h = 0;
-            return `${h.toString().padStart(2, '0')}:${m}`;
-        }
-
-        function setTimeSelectorsFrom24(prefix, time24) {
-            if(!time24) return;
-            let [h24, m] = time24.split(':');
-            let h = parseInt(h24);
-            let ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            
-            document.getElementById(`${prefix}Hour`).value = h.toString();
-            // تقريب الدقائق لأقرب 5 للتوافق مع القائمة الجديدة
-            let roundedM = (Math.round(parseInt(m) / 5) * 5).toString().padStart(2, '0');
-            if(roundedM === '60') roundedM = '55'; // تجنب خطأ 60 دقيقة
-            
-            document.getElementById(`${prefix}Minute`).value = roundedM;
-            document.getElementById(`${prefix}AmPm`).value = ampm;
-        }
-
-        function openModal() {
-            document.getElementById('classId').value = '';
-            document.getElementById('subjectName').value = '';
-            document.getElementById('gradeName').value = '';
-            document.getElementById('classDay').value = currentDay;
-            document.getElementById('reminderMins').value = '5';
-            document.getElementById('modalTitle').textContent = 'إضافة حصة جديدة';
-            document.getElementById('classModal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('classModal').style.display = 'none'; }
-
-        function saveClass() {
-            const id = document.getElementById('classId').value || Date.now().toString();
-            const subject = document.getElementById('subjectName').value;
-            const grade = document.getElementById('gradeName').value;
-            const day = document.getElementById('classDay').value;
-            const reminder = document.getElementById('reminderMins').value;
-            const startTime = get24HourFormat('start');
-            const endTime = get24HourFormat('end');
-
-            if(!subject || !grade) { alert("يرجى تعبئة اسم المادة والصف!"); return; }
-
-            const newClass = { id, subject, grade, day, startTime, endTime, reminder };
-            if(document.getElementById('classId').value) {
-                classes = classes.map(c => c.id === id ? newClass : c);
-            } else {
-                classes.push(newClass);
-            }
-
-            localStorage.setItem('gharsClasses', JSON.stringify(classes));
-            closeModal();
-            renderClasses();
-            
-            scheduleNativeNotifications(); 
-        }
-
-        function editClass(id) {
-            const cls = classes.find(c => c.id === id);
-            if(!cls) return;
-            document.getElementById('classId').value = cls.id;
-            document.getElementById('subjectName').value = cls.subject || cls.name || '';
-            document.getElementById('gradeName').value = cls.grade || '';
-            document.getElementById('classDay').value = cls.day;
-            document.getElementById('reminderMins').value = cls.reminder;
-            setTimeSelectorsFrom24('start', cls.startTime);
-            setTimeSelectorsFrom24('end', cls.endTime);
-            document.getElementById('modalTitle').textContent = 'تعديل الحصة';
-            document.getElementById('classModal').style.display = 'flex';
-        }
-
-        function deleteClass(id) {
-            if(confirm('هل أنت متأكد من الحذف؟')) {
-                classes = classes.filter(c => c.id !== id);
-                localStorage.setItem('gharsClasses', JSON.stringify(classes));
-                renderClasses();
-                scheduleNativeNotifications();
-            }
-        }
-
-        // =========================================================================
-        // نظام الإشعارات (كما هو بدون تغيير لضمان عمله)
-        // =========================================================================
-
-        function testNotification() {
-            if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.notification) {
-                cordova.plugins.notification.local.schedule({
-                    id: 999,
-                    title: 'تجربة ناجحة! 🚀',
-                    text: 'الإشعارات تعمل بكفاءة على جهازك. سيتم تنبيهك في مواعيد حصصك.',
-                    foreground: true,
-                    wakeup: true,
-                    vibrate: true
-                });
-            } else {
-                alert("النظام غير جاهز أو أنك تفتح التطبيق من المتصفح.");
-            }
-        }
-
-        function requestNotificationPermission() {
-            if (typeof cordova === 'undefined' || !cordova.plugins) return;
-            
-            var permissions = cordova.plugins.permissions;
-            permissions.requestPermission(permissions.POST_NOTIFICATIONS, function(status) {
-                if(status.hasPermission) {
-                    cordova.plugins.notification.local.hasPermission(function (granted) {
-                        if (!granted) {
-                            cordova.plugins.notification.local.requestPermission(function (granted) {
-                                if (granted) scheduleNativeNotifications();
-                            });
-                        } else {
-                            scheduleNativeNotifications();
-                        }
-                    });
-                }
-            }, null);
-        }
-
-        function scheduleNativeNotifications() {
-            if (typeof cordova === 'undefined' || !cordova.plugins || !cordova.plugins.notification) return;
-
-            cordova.plugins.notification.local.cancelAll(function() {
-                let scheduledNotifs = [];
-                let notifId = 1;
-                const now = new Date();
-
-                classes.forEach(cls => {
-                    const subjectDisplay = cls.subject || cls.name || 'الحصة';
-                    const gradeDisplay = cls.grade ? ` ${cls.grade}` : '';
-                    const fullClassName = `${subjectDisplay}${gradeDisplay}`;
-                    const targetDay = parseInt(cls.day); 
-                    const reminderMins = parseInt(cls.reminder);
-                    const [startH, startM] = cls.startTime.split(':').map(Number);
-                    
-                    for(let week = 0; week < 4; week++) {
-                        let classDate = new Date();
-                        let distance = (targetDay + 7 - classDate.getDay()) % 7;
-                        
-                        classDate.setDate(classDate.getDate() + distance + (week * 7));
-                        classDate.setHours(startH, startM, 0, 0);
-
-                        let reminderDate = new Date(classDate.getTime() - (reminderMins * 60000));
-                        if (reminderDate > now) {
-                            scheduledNotifs.push({
-                                id: notifId++,
-                                title: 'تذكير قبل الحصة ⏳',
-                                text: `متبقي ${reminderMins} دقائق على بدء حصة ${fullClassName}`,
-                                trigger: { at: reminderDate },
-                                foreground: true,
-                                wakeup: true,
-                                vibrate: true
-                            });
-                        }
-
-                        if (classDate > now) {
-                            scheduledNotifs.push({
-                                id: notifId++,
-                                title: 'بدأت الحصة! 🔔',
-                                text: `حصة ${fullClassName} بدأت الآن.`,
-                                trigger: { at: classDate },
-                                foreground: true,
-                                wakeup: true, 
-                                vibrate: true
-                            });
-                        }
-                    }
-                });
-
-                if (scheduledNotifs.length > 0) {
-                    cordova.plugins.notification.local.schedule(scheduledNotifs);
-                }
-            });
-        }
-
-        document.addEventListener('deviceready', function() {
-            init(); 
-            requestNotificationPermission(); 
-        }, false);
-
-        // لإغلاق النافذة عند النقر خارجها
-        window.onclick = function(event) {
-            const modal = document.getElementById('classModal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
-
-        if (typeof cordova === 'undefined') {
-            init();
-        }
-    </script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="schedule-core.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
