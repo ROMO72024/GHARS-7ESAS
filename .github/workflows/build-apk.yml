@@ -35,11 +35,10 @@ jobs:
         cordova plugin add cordova-plugin-local-notification-12
         cordova plugin add cordova-plugin-android-permissions
         
-        # حقن صلاحيات المنبه الدقيق والإشعارات في قلب التطبيق ليعمل على أندرويد 13+
+        # حقن صلاحيات المنبه الدقيق والإشعارات
         sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' platforms/android/app/src/main/AndroidManifest.xml
         
-        # --- تعديل: إضافة الأيقونة الاحترافية (الشعار) ---
-        # نقوم بإنشاء المجلدات اللازمة للأيقونات وننسخ الشعار المرفق
+        # إضافة الأيقونة 
         mkdir -p platforms/android/app/src/main/res/mipmap-hdpi
         mkdir -p platforms/android/app/src/main/res/mipmap-mdpi
         mkdir -p platforms/android/app/src/main/res/mipmap-xhdpi
@@ -50,7 +49,6 @@ jobs:
         cp ../icon.png platforms/android/app/src/main/res/mipmap-xhdpi/icon.png
         cp ../icon.png platforms/android/app/src/main/res/mipmap-xxhdpi/icon.png
         cp ../icon.png platforms/android/app/src/main/res/mipmap-xxxhdpi/icon.png
-        # ---------------------------------------------
         
         rm -rf www/*
         cp ../index.html www/index.html
@@ -58,7 +56,7 @@ jobs:
         cordova build android --debug
 
     - name: Upload APK File
-    uses: actions/upload-artifact@v4
-    with:
-    name: Ghars-Offline-APK
-    path: app/platforms/android/app/build/outputs/apk/debug/*.apk
+      uses: actions/upload-artifact@v4
+      with:
+        name: Ghars-Offline-APK
+        path: app/platforms/android/app/build/outputs/apk/debug/*.apk
