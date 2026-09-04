@@ -1,4 +1,4 @@
-name: Build Offline APK
+name: Build Ghars Class Alarm APK
 
 on:
   workflow_dispatch: 
@@ -27,35 +27,22 @@ jobs:
 
     - name: Build Offline Android App
       run: |
-        # إنشاء التطبيق
-        cordova create app com.romodemo.ghars "GharsApp"
+        cordova create app com.romodemo.ghars "منبّه غرس"
         cd app
-        
-        # 1. نسخ الأيقونة من مجلدك الرئيسي إلى داخل التطبيق
+        cp ../config.xml ./config.xml
         cp ../icon.png ./icon.png
-        
-        # 2. إخبار إعدادات التطبيق الرسمية باستخدام هذه الأيقونة
-        sed -i '/<\/widget>/i \    <icon src="icon.png" />' config.xml
-        
-        # إضافة منصة الأندرويد
         cordova platform add android@13.0.0
         
-        # إضافة مكتبات الإشعارات وصلاحيات الأندرويد
-        cordova plugin add cordova-plugin-local-notification-12
-        cordova plugin add cordova-plugin-android-permissions
+        # مكتبة الإشعارات الرسمية المتوافقة مع Cordova Android 13
+        cordova plugin add cordova-plugin-local-notification@1.2.3
         
-        # حقن صلاحيات المنبه الدقيق والإشعارات
-        sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' platforms/android/app/src/main/AndroidManifest.xml
-        
-        # نسخ الواجهة الجديدة التي صممناها
         rm -rf www/*
-        cp ../index.html www/index.html
+        cp ../index.html ../styles.css ../schedule-core.js ../app.js ../icon.png www/
         
-        # بناء التطبيق
         cordova build android --debug
 
     - name: Upload APK File
       uses: actions/upload-artifact@v4
       with:
-        name: Ghars-Offline-APK
+        name: Ghars-Class-Alarm-APK
         path: app/platforms/android/app/build/outputs/apk/debug/*.apk
