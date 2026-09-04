@@ -5,60 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>غرس - تنبيهات الحصص</title>
     <script src="cordova.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #8b206f; --bg: #f4f4f9; --card: #fff; --text: #333; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; }
-        header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { margin: 0; font-size: 1.2rem; }
-        .add-btn { background: white; color: var(--primary); border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        :root {
+            --primary: #8b206f; /* الأرجواني الغني من الشعار */
+            --secondary: #b3d39c; /* الأخضر الشاحب من الشعار */
+            --bg: #ffffff; /* الأبيض للخلفية */
+            --card: #f9f9fc; /* لون فاتح جداً للبطاقات */
+            --text-main: #333;
+            --text-sub: #666;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
         
-        /* زر التجربة الجديد */
-        .test-notif-btn { background: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 8px; margin: 15px; font-weight: bold; cursor: pointer; width: calc(100% - 30px); display: flex; justify-content: center; align-items: center; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 0; padding-bottom: 80px; }
         
-        .days-nav { display: flex; overflow-x: auto; background: var(--primary); padding: 0 10px 10px; gap: 10px; }
-        .day-tab { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; cursor: pointer; transition: 0.3s; }
-        .day-tab.active { background: white; color: var(--primary); font-weight: bold; }
+        header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+        h1 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+        
+        .add-btn { background: white; color: var(--primary); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.6rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .add-btn:active { transform: scale(0.95); }
+        
+        /* زر التجربة المحدث */
+        .test-notif-btn { background: var(--secondary); color: var(--primary); border: none; padding: 12px 20px; border-radius: 25px; margin: 20px 15px 10px; font-weight: 700; cursor: pointer; width: calc(100% - 30px); display: flex; justify-content: center; align-items: center; font-size: 1.1rem; box-shadow: 0 3px 6px rgba(0,0,0,0.1); transition: background 0.3s; }
+        .test-notif-btn:hover { background: #9bbd86; }
+        .test-notif-btn:active { transform: scale(0.98); }
+        
+        .days-nav { display: flex; overflow-x: auto; background: var(--primary); padding: 5px 10px 10px; gap: 10px; }
+        .day-tab { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 18px; border-radius: 20px; white-space: nowrap; cursor: pointer; transition: 0.3s; font-family: inherit; font-size: 0.95rem; }
+        .day-tab.active { background: white; color: var(--primary); font-weight: 700; }
+        
         .container { padding: 15px; }
-        .class-card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-right: 4px solid var(--primary); }
-        .class-info h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.1rem; }
-        .class-info .grade { margin: 0 0 8px 0; font-size: 0.95rem; font-weight: bold; color: #555; }
-        .class-info p { margin: 0; font-size: 0.9rem; color: #666; }
-        .actions { display: flex; flex-direction: column; gap: 8px; }
-        .actions button { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .edit-btn { background: #eee; color: #333; }
-        .delete-btn { background: #ffebee; color: #d32f2f; }
+        .class-card { background: var(--card); padding: 18px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-right: 5px solid var(--primary); }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
-        .modal-content h2 { margin-top: 0; color: var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+        .class-info h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.2rem; font-weight: 700; }
+        .class-info .grade { margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
+        .class-info p { margin: 0; font-size: 0.95rem; color: var(--text-sub); }
         
-        .time-selector { display: flex; align-items: center; gap: 5px; background: #f9f9f9; border: 1px solid #ddd; padding: 5px; border-radius: 8px; }
-        .time-selector select { border: none; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 8px 5px; font-weight: bold; text-align: center; }
-        .time-selector span { font-weight: bold; color: #666; padding: 0 2px; }
+        .actions { display: flex; flex-direction: column; gap: 10px; }
+        .actions button { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: inherit; font-size: 0.9rem; }
+        .edit-btn { background: #eee; color: #333; transition: background 0.2s; }
+        .edit-btn:hover { background: #ddd; }
+        .delete-btn { background: #ffebee; color: #d32f2f; transition: background 0.2s; }
+        .delete-btn:hover { background: #ffcdd2; }
         
-        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-save { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .btn-cancel { background: #eee; color: #333; border: none; padding: 12px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #888; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: var(--primary); font-weight: 700; font-size: 1.4rem; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 1rem; color: var(--text-main); }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 5px rgba(139,32,111,0.3); }
+        
+        .time-selector { display: flex; align-items: center; gap: 8px; background: #f9f9f9; border: 1px solid #ddd; padding: 8px; border-radius: 10px; }
+        .time-selector select { border: none; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 10px; font-weight: bold; text-align: center; }
+        .time-selector span { font-weight: bold; color: var(--text-sub); padding: 0 4px; font-size: 1.2rem; }
+        
+        .modal-actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: background 0.3s; }
+        .btn-save:hover { background: #711a5b; }
+        .btn-cancel { background: #eee; color: #333; border: none; padding: 14px; border-radius: 10px; flex: 1; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: background 0.2s; }
+        .btn-cancel:hover { background: #ddd; }
+        
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-sub); font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>جدول الحصص</h1>
+        <h1>جدول الحصص غرس</h1>
         <button class="add-btn" onclick="openModal()">+</button>
     </header>
 
-    <!-- زر التجربة -->
     <button class="test-notif-btn" onclick="testNotification()">🔔 جرب الإشعارات الآن</button>
 
     <div class="days-nav" id="daysNav"></div>
     <div class="container" id="classesList"></div>
 
-    <!-- النافذة المنبثقة -->
     <div class="modal" id="classModal">
         <div class="modal-content">
             <h2 id="modalTitle">إضافة حصة جديدة</h2>
@@ -180,7 +203,7 @@
                         <h3>${subject}</h3>
                         ${grade ? `<p class="grade">🎓 للصف ${grade}</p>` : ''}
                         <p>🕒 ${formatTimeToDisplay(cls.startTime)} - ${formatTimeToDisplay(cls.endTime)}</p>
-                        <p style="font-size: 0.8rem; color: var(--primary); margin-top:3px;">🔔 تنبيه قبل البداية بـ ${cls.reminder} دقائق</p>
+                        <p style="font-size: 0.9rem; color: var(--primary); margin-top:5px; font-weight: 600;">🔔 تنبيه قبل البداية بـ ${cls.reminder} دقائق</p>
                     </div>
                     <div class="actions">
                         <button class="edit-btn" onclick="editClass('${cls.id}')">تعديل</button>
@@ -282,7 +305,7 @@
         }
 
         // =========================================================================
-        // نظام الإشعارات (المعدل والموثق لأندرويد 13+)
+        // نظام الإشعارات
         // =========================================================================
 
         function testNotification() {
@@ -303,11 +326,9 @@
         function requestNotificationPermission() {
             if (typeof cordova === 'undefined' || !cordova.plugins) return;
             
-            // طلب صلاحيات أندرويد 13 للإشعارات بشكل إجباري
             var permissions = cordova.plugins.permissions;
             permissions.requestPermission(permissions.POST_NOTIFICATIONS, function(status) {
                 if(status.hasPermission) {
-                    // إذا وافق، نطلب صلاحيات المكتبة نفسها
                     cordova.plugins.notification.local.hasPermission(function (granted) {
                         if (!granted) {
                             cordova.plugins.notification.local.requestPermission(function (granted) {
