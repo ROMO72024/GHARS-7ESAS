@@ -27,8 +27,17 @@ jobs:
 
     - name: Build Offline Android App
       run: |
+        # إنشاء التطبيق
         cordova create app com.romodemo.ghars "GharsApp"
         cd app
+        
+        # 1. نسخ الأيقونة من مجلدك الرئيسي إلى داخل التطبيق
+        cp ../icon.png ./icon.png
+        
+        # 2. إخبار إعدادات التطبيق الرسمية باستخدام هذه الأيقونة
+        sed -i '/<\/widget>/i \    <icon src="icon.png" />' config.xml
+        
+        # إضافة منصة الأندرويد
         cordova platform add android@13.0.0
         
         # إضافة مكتبات الإشعارات وصلاحيات الأندرويد
@@ -38,21 +47,11 @@ jobs:
         # حقن صلاحيات المنبه الدقيق والإشعارات
         sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />' platforms/android/app/src/main/AndroidManifest.xml
         
-        # إضافة الأيقونة 
-        mkdir -p platforms/android/app/src/main/res/mipmap-hdpi
-        mkdir -p platforms/android/app/src/main/res/mipmap-mdpi
-        mkdir -p platforms/android/app/src/main/res/mipmap-xhdpi
-        mkdir -p platforms/android/app/src/main/res/mipmap-xxhdpi
-        mkdir -p platforms/android/app/src/main/res/mipmap-xxxhdpi
-        cp ../icon.png platforms/android/app/src/main/res/mipmap-hdpi/icon.png
-        cp ../icon.png platforms/android/app/src/main/res/mipmap-mdpi/icon.png
-        cp ../icon.png platforms/android/app/src/main/res/mipmap-xhdpi/icon.png
-        cp ../icon.png platforms/android/app/src/main/res/mipmap-xxhdpi/icon.png
-        cp ../icon.png platforms/android/app/src/main/res/mipmap-xxxhdpi/icon.png
-        
+        # نسخ الواجهة الجديدة التي صممناها
         rm -rf www/*
         cp ../index.html www/index.html
         
+        # بناء التطبيق
         cordova build android --debug
 
     - name: Upload APK File
